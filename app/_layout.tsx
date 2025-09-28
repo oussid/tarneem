@@ -8,6 +8,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/firebase';
+import { AudioPlayerProvider } from '@/services/AudioPlayerContext';
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -39,6 +40,7 @@ export default function RootLayout() {
 
 
   return (
+    <AudioPlayerProvider>
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       {/* The Stack navigator will render the correct screens based on the user state */}
       <Stack>
@@ -49,5 +51,6 @@ export default function RootLayout() {
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
+    </AudioPlayerProvider>
   );
 }
