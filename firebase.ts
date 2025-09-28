@@ -1,22 +1,21 @@
 // firebase.ts
 
 import { initializeApp } from "firebase/app";
-// 1. Import getAuth instead of getAnalytics
-import { getAuth } from "firebase/auth"; 
+import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCJzArn3ZIw0uDI_ShkgOqQsvd4jUQsXzg",
-  authDomain: "idsaid-tarneemapp.firebaseapp.com",
-  projectId: "idsaid-tarneemapp",
-  storageBucket: "idsaid-tarneemapp.firebasestorage.app",
-  messagingSenderId: "901909619251",
-  appId: "1:901909619251:web:b42c103563a1191cd7b946",
-  measurementId: "G-KHJN7ETVRF"
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// 2. Initialize and EXPORT the auth service. This is the crucial line.
+// Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
