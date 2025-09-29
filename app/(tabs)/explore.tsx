@@ -4,31 +4,37 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAudioPlayer, AudioTrack } from '@/services/AudioPlayerContext';
 
-// --- Sample Tracks ---
-// IMPORTANT: Replace these with actual, direct .mp3 URLs
 const sampleTracks: AudioTrack[] = [
   {
     id: '1',
-    // Example from archive.org. FIND YOUR OWN.
     uri: 'https://archive.org/download/HearYeHim/HYH060_TheHeavenlyKingdom.mp3',
     title: 'Great Is Thy Faithfulness',
     artist: 'Gospel Hymn',
   },
   {
     id: '2',
-    // Example from archive.org. FIND YOUR OWN.
     uri: 'https://archive.org/download/HearYeHim/HYH060_TheHeavenlyKingdom.mp3',
     title: 'Amazing Grace',
     artist: 'Gospel Hymn',
   },
+  {
+    id: '3',
+    uri: 'https://archive.org/download/HearYeHim/HYH060_TheHeavenlyKingdom.mp3',
+    title: 'Holy Night',
+    artist: 'Gospel Hymn',
+  }
 ];
-// --------------------
 
 export default function ExploreScreen() {
-    const { playTrack, currentTrack } = useAudioPlayer();
+    const { loadPlaylist, currentTrack } = useAudioPlayer();
 
-    const renderItem = ({ item }: { item: AudioTrack }) => (
-        <TouchableOpacity onPress={() => playTrack(item)} style={styles.trackItem}>
+    const handleTrackSelect = (track: AudioTrack, index: number) => {
+        // Load the entire playlist, starting at the selected track's index
+        loadPlaylist(sampleTracks, index);
+    };
+
+    const renderItem = ({ item, index }: { item: AudioTrack, index: number }) => (
+        <TouchableOpacity onPress={() => handleTrackSelect(item, index)} style={styles.trackItem}>
             <ThemedText type="defaultSemiBold">{item.title}</ThemedText>
             <ThemedText style={styles.artistText}>{item.artist}</ThemedText>
             {currentTrack?.id === item.id && <ThemedText style={styles.playingText}>Now Playing</ThemedText>}
@@ -63,7 +69,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   playingText: {
-    color: '#1e90ff', // A highlight color for the playing track
+    color: '#1e90ff',
     fontSize: 12,
     marginTop: 4,
   }

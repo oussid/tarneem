@@ -17,14 +17,16 @@ interface PlaybackStatus {
   isPlaying: boolean;
 }
 
-type RepeatMode = 'off' | 'track';
+type RepeatMode = 'off' | 'track' | 'playlist'; // Added 'playlist' repeat mode
 
 interface AudioContextType {
   isPlaying: boolean;
   currentTrack: AudioTrack | null;
   playbackStatus: PlaybackStatus;
   repeatMode: RepeatMode;
-  playTrack: (track: AudioTrack) => void;
+  loadPlaylist: (playlist: AudioTrack[], startIndex?: number) => void;
+  playNextTrack: () => void;
+  playPreviousTrack: () => void;
   pauseTrack: () => void;
   resumeTrack: () => void;
   seekTrack: (position: number) => void;
@@ -36,6 +38,8 @@ const AudioContext = createContext<AudioContextType | undefined>(undefined);
 export const AudioPlayerProvider = ({ children }: { children: ReactNode }) => {
   const [sound, setSound] = useState<Sound | null>(null);
   const [currentTrack, setCurrentTrack] = useState<AudioTrack | null>(null);
+  const [playlist, setPlaylist] = useState<AudioTrack[]>([]);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState<number | null>(null);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>('off');
   const [playbackStatus, setPlaybackStatus] = useState<PlaybackStatus>({
     position: 0,
@@ -61,26 +65,27 @@ export const AudioPlayerProvider = ({ children }: { children: ReactNode }) => {
         isPlaying: status.isPlaying,
       });
 
-      // --- NEW: Simplified End-of-Track Logic ---
       if (status.didJustFinish && !status.isLooping) {
-        // If the track finished and wasn't looping, just reset the UI
-        setPlaybackStatus({ position: 0, duration: status.durationMillis || 0, isPlaying: false });
+        if (repeatMode === 'playlist') {
+          playNextTrack(true); // true indicates it's an auto-play
+        } else {
+          setPlaybackStatus({ position: 0, duration: status.durationMillis || 0, isPlaying: false });
+        }
       }
-      // ------------------------------------------
-
     } else {
-        if (status.error) console.error(`Playback Error: ${status.error}`);
-        setPlaybackStatus({ position: 0, duration: 0, isPlaying: false });
+      if (status.error) console.error(`Playback Error: ${status.error}`);
+      setPlaybackStatus({ position: 0, duration: 0, isPlaying: false });
     }
   };
-
-  async function playTrack(track: AudioTrack) {
+  
+  async function playTrack(track: AudioTrack, index: number) {
     if (sound) await sound.unloadAsync();
     setCurrentTrack(track);
+    setCurrentTrackIndex(index);
     try {
       const { sound: newSound } = await Audio.Sound.createAsync(
         { uri: track.uri },
-        { shouldPlay: true, isLooping: repeatMode === 'track' }, // Set initial looping state
+        { shouldPlay: true, isLooping: repeatMode === 'track' },
         onPlaybackStatusUpdate
       );
       setSound(newSound);
@@ -90,22 +95,56 @@ export const AudioPlayerProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  // *** THE FIX IS HERE ***
-  // This effect hook syncs the repeat mode with the sound object
+  function loadPlaylist(newPlaylist: AudioTrack[], startIndex = 0) {
+    setPlaylist(newPlaylist);
+    playTrack(newPlaylist[startIndex], startIndex);
+  }
+  
+  function playNextTrack(isAutoPlay = false) {
+    if (playlist.length === 0 || currentTrackIndex === null) return;
+    let nextIndex = currentTrackIndex + 1;
+    // If it's the end of the playlist
+    if (nextIndex >= playlist.length) {
+      if (repeatMode === 'playlist') {
+        nextIndex = 0; // Loop back to the start
+      } else {
+        // If not repeating playlist, stop unless it's a manual skip
+        if (isAutoPlay) {
+            setCurrentTrack(null);
+            return;
+        }
+        nextIndex = 0; // Manual skip goes to first track
+      }
+    }
+    playTrack(playlist[nextIndex], nextIndex);
+  }
+
+  function playPreviousTrack() {
+    if (playlist.length === 0 || currentTrackIndex === null) return;
+    let prevIndex = currentTrackIndex - 1;
+    if (prevIndex < 0) {
+      prevIndex = playlist.length - 1; // Go to the end of the list
+    }
+    playTrack(playlist[prevIndex], prevIndex);
+  }
+
+  const toggleRepeatMode = () => {
+    setRepeatMode(prev => {
+        if (prev === 'off') return 'track';
+        if (prev === 'track') return 'playlist';
+        return 'off';
+    });
+  };
+
   useEffect(() => {
     if (sound) {
       sound.setIsLoopingAsync(repeatMode === 'track');
     }
   }, [repeatMode, sound]);
-  // ***********************
 
   async function pauseTrack() { if (sound) await sound.pauseAsync(); }
   async function resumeTrack() { if (sound) await sound.playAsync(); }
   async function seekTrack(position: number) { if (sound) await sound.setPositionAsync(position); }
-
-  const toggleRepeatMode = () => {
-    setRepeatMode(prevMode => (prevMode === 'off' ? 'track' : 'off'));
-  };
   
   useEffect(() => {
     return sound ? () => { sound.unloadAsync(); } : undefined;
@@ -117,7 +156,9 @@ export const AudioPlayerProvider = ({ children }: { children: ReactNode }) => {
       currentTrack,
       playbackStatus,
       repeatMode,
-      playTrack,
+      loadPlaylist,
+      playNextTrack,
+      playPreviousTrack,
       pauseTrack,
       resumeTrack,
       seekTrack,

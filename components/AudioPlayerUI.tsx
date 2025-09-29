@@ -26,6 +26,8 @@ const AudioPlayerUI = () => {
       seekTrack,
       repeatMode,
       toggleRepeatMode,
+      playNextTrack,
+      playPreviousTrack,
     } = useAudioPlayer();
   const colorScheme = useColorScheme();
   const iconColor = colorScheme === 'dark' ? Colors.dark.icon : Colors.light.icon;
@@ -43,16 +45,14 @@ const AudioPlayerUI = () => {
                 <ThemedText style={styles.artistText} numberOfLines={1}>{currentTrack.artist}</ThemedText>
             </View>
             <View style={styles.controls}>
-                {/* --- REPEAT BUTTON --- */}
                 <Ionicons.Button
-                    name="repeat"
+                    name="play-skip-back"
                     size={24}
-                    onPress={toggleRepeatMode}
+                    onPress={playPreviousTrack}
                     backgroundColor="transparent"
                     underlayColor="#333"
-                    color={repeatMode === 'track' ? activeIconColor : iconColor}
+                    color={iconColor}
                 />
-                {/* -------------------- */}
                 {isPlaying ? (
                 <Ionicons.Button
                     name="pause"
@@ -72,6 +72,14 @@ const AudioPlayerUI = () => {
                     color={iconColor}
                 />
                 )}
+                <Ionicons.Button
+                    name="play-skip-forward"
+                    size={24}
+                    onPress={() => playNextTrack()}
+                    backgroundColor="transparent"
+                    underlayColor="#333"
+                    color={iconColor}
+                />
             </View>
         </View>
 
@@ -89,6 +97,19 @@ const AudioPlayerUI = () => {
             />
             <ThemedText style={styles.timeText}>{formatTime(playbackStatus.duration)}</ThemedText>
         </View>
+        <View style={styles.footerControls}>
+            <Ionicons.Button
+                name={repeatMode === 'track' ? "repeat-outline" : "repeat"}
+                size={20}
+                onPress={toggleRepeatMode}
+                backgroundColor="transparent"
+                underlayColor="#333"
+                color={repeatMode !== 'off' ? activeIconColor : iconColor}
+            >
+                {/* Display a small '1' when repeating a single track */}
+                {repeatMode === 'track' && <ThemedText style={{ color: activeIconColor, fontSize: 12 }}>1</ThemedText>}
+            </Ionicons.Button>
+        </View>
     </ThemedView>
   );
 };
@@ -101,7 +122,7 @@ const styles = StyleSheet.create({
     bottom: 49,
     left: 0,
     right: 0,
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     paddingVertical: 10,
     borderTopWidth: 1,
     borderTopColor: '#333',
@@ -136,5 +157,10 @@ const styles = StyleSheet.create({
   controls: {
       flexDirection: 'row',
       alignItems: 'center',
+  },
+  footerControls: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
   }
 });
