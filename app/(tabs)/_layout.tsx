@@ -35,6 +35,17 @@ export default function TabLayout() {
             ),
           }}
         />
+        {/* --- ADD THIS NEW SCREEN --- */}
+        <Tabs.Screen
+          name="upload"
+          options={{
+            title: 'Upload',
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIcon name={focused ? 'cloud-upload' : 'cloud-upload-outline'} color={color} />
+            ),
+          }}
+        />
+        {/* ------------------------- */}
       </Tabs>
       <AudioPlayerUI />
     </>
