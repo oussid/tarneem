@@ -9,7 +9,6 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/colors';
 import Slider from '@react-native-community/slider';
 
-// Helper function to format milliseconds into MM:SS
 const formatTime = (millis: number) => {
     const totalSeconds = millis / 1000;
     const seconds = Math.floor(totalSeconds % 60);
@@ -18,9 +17,19 @@ const formatTime = (millis: number) => {
 };
 
 const AudioPlayerUI = () => {
-  const { isPlaying, currentTrack, pauseTrack, resumeTrack, playbackStatus, seekTrack } = useAudioPlayer();
+  const { 
+      isPlaying, 
+      currentTrack, 
+      pauseTrack, 
+      resumeTrack, 
+      playbackStatus, 
+      seekTrack,
+      repeatMode,
+      toggleRepeatMode,
+    } = useAudioPlayer();
   const colorScheme = useColorScheme();
   const iconColor = colorScheme === 'dark' ? Colors.dark.icon : Colors.light.icon;
+  const activeIconColor = colorScheme === 'dark' ? Colors.dark.tint : Colors.light.tint;
   const trackColor = colorScheme === 'dark' ? '#fff' : '#000';
   const thumbColor = colorScheme === 'dark' ? '#fff' : '#0a7ea4';
 
@@ -30,10 +39,20 @@ const AudioPlayerUI = () => {
     <ThemedView style={styles.container}>
         <View style={styles.topSection}>
             <View style={styles.trackInfo}>
-                <ThemedText type="defaultSemiBold">{currentTrack.title}</ThemedText>
-                <ThemedText style={styles.artistText}>{currentTrack.artist}</ThemedText>
+                <ThemedText type="defaultSemiBold" numberOfLines={1}>{currentTrack.title}</ThemedText>
+                <ThemedText style={styles.artistText} numberOfLines={1}>{currentTrack.artist}</ThemedText>
             </View>
-            <View>
+            <View style={styles.controls}>
+                {/* --- REPEAT BUTTON --- */}
+                <Ionicons.Button
+                    name="repeat"
+                    size={24}
+                    onPress={toggleRepeatMode}
+                    backgroundColor="transparent"
+                    underlayColor="#333"
+                    color={repeatMode === 'track' ? activeIconColor : iconColor}
+                />
+                {/* -------------------- */}
                 {isPlaying ? (
                 <Ionicons.Button
                     name="pause"
@@ -100,6 +119,7 @@ const styles = StyleSheet.create({
   },
   trackInfo: {
     flex: 1,
+    marginRight: 10,
   },
   artistText: {
     color: '#888',
@@ -113,4 +133,8 @@ const styles = StyleSheet.create({
     width: 40,
     textAlign: 'center',
   },
+  controls: {
+      flexDirection: 'row',
+      alignItems: 'center',
+  }
 });
