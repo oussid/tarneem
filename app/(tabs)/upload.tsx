@@ -1,75 +1,75 @@
 // app/(tabs)/upload.tsx
 import { useState } from 'react';
-import { Button, Image, View, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { Button, View, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { auth } from '@/firebase';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function UploadScreen() {
-  const [image, setImage] = useState<string | null>(null);
+  const [track, setTrack] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
+  const pickAudio = async () => {
+    let result = await DocumentPicker.getDocumentAsync({
+      type: 'audio/*', // This allows picking any audio file
     });
 
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
+    if (!result.canceled && result.assets) {
+      setTrack(result.assets[0]);
     }
   };
 
-  const uploadImage = async () => {
-    if (!image) return;
+  const uploadAudio = async () => {
+    if (!track) return;
     setUploading(true);
     const user = auth.currentUser;
     if (!user) {
-        Alert.alert("Error", "You must be logged in to upload images.");
-        setUploading(false);
-        return;
+      Alert.alert("Error", "You must be logged in to upload audio.");
+      setUploading(false);
+      return;
     }
 
     try {
-        const response = await fetch(image);
-        const blob = await response.blob();
-        const storage = getStorage();
-        // Create a unique filename
-        const filename = `uploads/${user.uid}/${Date.now()}`;
-        const storageRef = ref(storage, filename);
+      const response = await fetch(track.uri);
+      const blob = await response.blob();
+      const storage = getStorage();
+      // Store all audio in a user-specific folder
+      const filename = `uploads/${user.uid}/audio/${track.name}`;
+      const storageRef = ref(storage, filename);
+      
+      await uploadBytes(storageRef, blob);
+      
+      const downloadUrl = await getDownloadURL(storageRef);
+      console.log("File available at", downloadUrl);
 
-        await uploadBytes(storageRef, blob);
-
-        const downloadUrl = await getDownloadURL(storageRef);
-        console.log("File available at", downloadUrl);
-
-        setUploading(false);
-        Alert.alert('Upload successful!', 'Your image has been uploaded.');
-        setImage(null);
+      setUploading(false);
+      Alert.alert('Upload successful!', `${track.name} has been uploaded.`);
+      setTrack(null);
     } catch (error) {
-        console.error(error);
-        setUploading(false);
-        Alert.alert('Upload failed', 'There was an error uploading your image.');
+      console.error(error);
+      setUploading(false);
+      Alert.alert('Upload failed', 'There was an error uploading your audio file.');
     }
   };
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">Upload Content</ThemedText>
-      <Button title="Pick an image from camera roll" onPress={pickImage} />
-      {image && (
-        <View style={styles.imageContainer}>
-            <Image source={{ uri: image }} style={styles.image} />
+      <ThemedText type="title">Upload Audio</ThemedText>
+      <ThemedText style={styles.subtitle}>Select a hymn or podcast to upload</ThemedText>
+      <Button title="Pick an audio file" onPress={pickAudio} />
+      {track && (
+        <ThemedView style={styles.trackContainer}>
+            <Ionicons name="musical-notes" size={32} color="#888" />
+            <ThemedText style={styles.trackName} numberOfLines={1}>{track.name}</ThemedText>
             {uploading ? (
-                <ActivityIndicator size="large" color="#0000ff" />
+                <ActivityIndicator size="large" color="#0a7ea4" />
             ) : (
-                <Button title="Upload Image" onPress={uploadImage} />
+                <Button title="Upload Track" onPress={uploadAudio} />
             )}
-        </View>
+        </ThemedView>
       )}
     </ThemedView>
   );
@@ -81,14 +81,23 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 20,
+        padding: 20,
     },
-    imageContainer: {
+    subtitle: {
+        fontSize: 16,
+        color: '#888',
+        textAlign: 'center',
+    },
+    trackContainer: {
         alignItems: 'center',
         gap: 20,
-    },
-    image: {
-        width: 200,
-        height: 200,
+        marginTop: 30,
+        padding: 20,
         borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#333',
+    },
+    trackName: {
+        fontSize: 18,
     },
 });

@@ -26,6 +26,16 @@ export default function TabLayout() {
             ),
           }}
         />
+        {/* ADD THE LIBRARY SCREEN HERE */}
+        <Tabs.Screen
+          name="library"
+          options={{
+            title: 'Library',
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIcon name={focused ? 'library' : 'library-outline'} color={color} />
+            ),
+          }}
+        />
         <Tabs.Screen
           name="explore"
           options={{
@@ -35,7 +45,6 @@ export default function TabLayout() {
             ),
           }}
         />
-        {/* --- ADD THIS NEW SCREEN --- */}
         <Tabs.Screen
           name="upload"
           options={{
@@ -45,7 +54,6 @@ export default function TabLayout() {
             ),
           }}
         />
-        {/* ------------------------- */}
       </Tabs>
       <AudioPlayerUI />
     </>
